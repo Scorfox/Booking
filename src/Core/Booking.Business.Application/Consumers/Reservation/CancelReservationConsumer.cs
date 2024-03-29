@@ -8,6 +8,7 @@ using Otus.Booking.Common.Booking.Contracts.Reservation.Responses;
 using Otus.Booking.Common.Booking.Contracts.User.Requests;
 using Otus.Booking.Common.Booking.Contracts.User.Responses;
 using Otus.Booking.Common.Booking.Exceptions;
+using Otus.Booking.Common.Booking.Notifications.Enums;
 using Otus.Booking.Common.Booking.Notifications.Models;
 
 namespace Booking.Business.Application.Consumers.Reservation;
@@ -39,6 +40,7 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
     {
         var request = context.Message;
         var table = await _tableRepository.FindByIdAsync(request.Id);
+        
         if (table == null)
             throw new NotFoundException($"Table with ID {request.TableId} doesn't exist");
         
@@ -51,14 +53,15 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
             throw new ForbiddenException($"RequestCompanyId {request.CompanyId} is not equal TableCompanyId {reservation.Table.CompanyId}");
 
         reservation.WhoCancelledId = request.WhoCancelledId;
-
-        var user = await _userRequestClient.GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
-        var filial =
-            await _filialByIdRequestClient.GetResponse<GetFilialResult>(
-                new GetFilialById {CompanyId = reservation.Table.FilialId});
-
+        
         await _reservationRepository.UpdateAsync(reservation);
-
+        
+        await context.RespondAsync(_mapper.Map<CancelReservationResult>(reservation));
+        
+        var user = await _userRequestClient
+            .GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
+        var filial = await _filialByIdRequestClient
+            .GetResponse<GetFilialResult>(new GetFilialById {CompanyId = reservation.Table.FilialId});
 
         var reservationStatusNotification = new ReservationStatusChangedNotification
         {
@@ -73,7 +76,5 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
         };
 
         await context.Publish(reservationStatusNotification);
-
-        await context.RespondAsync(_mapper.Map<CancelReservationResult>(reservation));
     }
 }

@@ -27,7 +27,7 @@ public class UpdateTableConsumer : IConsumer<UpdateTable>
             throw new NotFoundException($"Table with ID {request.Id} doesn't exist");
 
         if (await _tableRepository.HasAnyWithFilialIdAndNameExceptIdAsync(request.Id, request.FilialId, request.Name))
-            throw new BadRequestException($"Table with NAME {request.Name} and FILIAL {request.FilialId} already exists");
+            throw new ConflictException($"Table with NAME {request.Name} and FILIAL {request.FilialId} already exists");
         
         if (request.CompanyId != table.CompanyId)
             throw new ForbiddenException($"RequestCompanyId {request.CompanyId} is not equal TableCompanyId {table.CompanyId}");

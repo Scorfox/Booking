@@ -49,13 +49,14 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         if (table == null)
             throw new BadRequestException($"Table with ID {request.TableId} doesn't exist");
 
-        var filial =
-            await _filialByIdRequestClient.GetResponse<GetFilialResult>(
-                new GetFilialById {Id = table.FilialId});
+        var filial = await _filialByIdRequestClient
+            .GetResponse<GetFilialResult>(new GetFilialById {Id = table.FilialId});
 
         var reservation = _mapper.Map<Domain.Entities.Reservation>(request);
         
         await _reservationRepository.CreateAsync(reservation);
+        
+        await context.RespondAsync(_mapper.Map<CreateReservationResult>(reservation));
         
         _bookingLog.AddLog($"{request.TableId} is pre-booked at {request.From} to {request.To} by userId {request.WhoBookedId}");
 
@@ -73,7 +74,5 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         };
 
         await context.Publish(reservationCreatedNotification);
-
-        await context.RespondAsync(_mapper.Map<CreateReservationResult>(reservation));
     }
 }

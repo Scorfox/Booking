@@ -23,12 +23,12 @@ public class CreateTableConsumer : IConsumer<CreateTable>
         var request = context.Message;
         
         if (await _tableRepository.HasAnyWithFilialIdAndNameAsync(request.FilialId, request.Name))
-            throw new BadRequestException($"Table with NAME {request.Name} and FILIAL {request.FilialId} already exists");
+            throw new ConflictException($"Table with NAME {request.Name} and FILIAL {request.FilialId} already exists");
         
-        var filial = _mapper.Map<Domain.Entities.Table>(request);
+        var table = _mapper.Map<Domain.Entities.Table>(request);
         
-        await _tableRepository.CreateAsync(filial);
+        await _tableRepository.CreateAsync(table);
 
-        await context.RespondAsync(_mapper.Map<CreateTableResult>(filial));
+        await context.RespondAsync(_mapper.Map<CreateTableResult>(table));
     }
 }
