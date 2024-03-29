@@ -4,8 +4,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyVersion>1.0.0312.12243</AssemblyVersion>
-        <FileVersion>1.0.0312.12243</FileVersion>
+        <AssemblyVersion>1.0.0325.25440</AssemblyVersion>
+        <FileVersion>1.0.0325.25440</FileVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,7 +17,7 @@
       <PackageReference Include="MediatR" Version="12.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-      <PackageReference Include="Otus.Booking.Common" Version="0.0.0-g283ba051b3" />
+      <PackageReference Include="Otus.Booking.Common" Version="0.0.0-g6c697a4e45" />
     </ItemGroup>
 
     <ItemGroup>

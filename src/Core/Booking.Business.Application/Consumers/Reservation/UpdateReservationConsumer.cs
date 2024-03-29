@@ -29,12 +29,12 @@ public class UpdateReservationConsumer : IConsumer<UpdateReservation>
         var request = context.Message;
         
         if (!await _tableRepository.HasAnyByIdAsync(request.TableId))
-            throw new NotFoundException($"Table with ID {request.TableId} doesn't exists");
+            throw new NotFoundException($"Table with ID {request.TableId} doesn't exist");
         
         var reservation = await _reservationRepository.FindByIdAsync(request.Id);
         
         if (reservation == null)
-            throw new NotFoundException($"Reservation with ID {request.Id} doesn't exists");
+            throw new NotFoundException($"Reservation with ID {request.Id} doesn't exist");
         
         if (request.CompanyId != reservation.Table.CompanyId)
             throw new ForbiddenException($"RequestCompanyId {request.CompanyId} is not equal TableCompanyId {reservation.Table.CompanyId}");

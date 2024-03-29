@@ -25,7 +25,7 @@ public sealed class GetTableConsumer : IConsumer<GetTableById>
         var table = await _tableRepository.FindByIdAsync(request.Id);
 
         if (table == null)
-            throw new NotFoundException($"Table with ID {request.Id} doesn't exists");
+            throw new NotFoundException($"Table with ID {request.Id} doesn't exist");
 
         await context.RespondAsync(_mapper.Map<GetTableResult>(table));
     }

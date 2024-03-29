@@ -22,7 +22,7 @@ public class DeleteTableConsumer:IConsumer<DeleteTable>
         var table = await _tableRepository.FindByIdAsync(request.Id);
         
         if (table == null)
-            throw new NotFoundException($"Table with ID {request.Id} doesn't exists");
+            throw new NotFoundException($"Table with ID {request.Id} doesn't exist");
         
         if (request.CompanyId != table.CompanyId)
             throw new ForbiddenException($"RequestCompanyId {request.CompanyId} is not equal TableCompanyId {table.CompanyId}");
