@@ -26,7 +26,7 @@ public class GetTableTests : BaseTest
     [Test]
     public async Task GetTableByIdTest_ReturnsSuccess()
     {
-        // Arrang
+        // Arrange
 
         var table = Fixture.Build<Domain.Entities.Table>().Without(e => e.Reservations).Create();
         await TableRepository.CreateAsync(table);

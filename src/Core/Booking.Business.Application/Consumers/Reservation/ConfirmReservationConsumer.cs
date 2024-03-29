@@ -8,6 +8,7 @@ using Otus.Booking.Common.Booking.Contracts.Reservation.Responses;
 using Otus.Booking.Common.Booking.Contracts.User.Requests;
 using Otus.Booking.Common.Booking.Contracts.User.Responses;
 using Otus.Booking.Common.Booking.Exceptions;
+using Otus.Booking.Common.Booking.Notifications.Enums;
 using Otus.Booking.Common.Booking.Notifications.Models;
 
 namespace Booking.Business.Application.Consumers.Reservation;
@@ -51,15 +52,17 @@ public class ConfirmReservationConsumer : IConsumer<ConfirmReservation>
         
         if (request.CompanyId != reservation.Table.CompanyId)
             throw new ForbiddenException($"RequestCompanyId {request.CompanyId} is not equal TableCompanyId {reservation.Table.CompanyId}");
-
-        var user = await _userRequestClient.GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
-        var filial =
-            await _filialByIdRequestClient.GetResponse<GetFilialResult>(
-                new GetFilialById {CompanyId = reservation.Table.FilialId});
+        
+        var user = await _userRequestClient
+            .GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
+        var filial = await _filialByIdRequestClient
+            .GetResponse<GetFilialResult>(new GetFilialById {CompanyId = reservation.Table.FilialId});
 
         reservation.WhoConfirmedId = request.WhoConfirmedId;
         
         await _reservationRepository.UpdateAsync(reservation);
+        
+        await context.RespondAsync(_mapper.Map<ConfirmReservationResult>(reservation));
 
         var reservationStatusNotification = new ReservationStatusChangedNotification
         {
@@ -74,8 +77,5 @@ public class ConfirmReservationConsumer : IConsumer<ConfirmReservation>
         };
 
         await context.Publish(reservationStatusNotification);
-
-
-        await context.RespondAsync(_mapper.Map<ConfirmReservationResult>(reservation));
     }
 }

@@ -42,23 +42,25 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
     public async Task Consume(ConsumeContext<CreateReservation> context)
     {
         var request = context.Message;
-
-        var user = await _userRequestClient.GetResponse<GetUserResult>(new GetUserById { Id = request.WhoBookedId });
+        
         var table = await _tableRepository.FindByIdAsync(request.TableId);
 
         if (table == null)
             throw new BadRequestException($"Table with ID {request.TableId} doesn't exist");
-
-        var filial =
-            await _filialByIdRequestClient.GetResponse<GetFilialResult>(
-                new GetFilialById {Id = table.FilialId});
+        
+        var user = await _userRequestClient
+            .GetResponse<GetUserResult>(new GetUserById { Id = request.WhoBookedId });
+        var filial = await _filialByIdRequestClient
+            .GetResponse<GetFilialResult>(new GetFilialById {Id = table.FilialId});
 
         var reservation = _mapper.Map<Domain.Entities.Reservation>(request);
         
         await _reservationRepository.CreateAsync(reservation);
         
+        await context.RespondAsync(_mapper.Map<CreateReservationResult>(reservation));
+        
         _bookingLog.AddLog($"{request.TableId} is pre-booked at {request.From} to {request.To} by userId {request.WhoBookedId}");
-
+        
         var reservationCreatedNotification = new ReservationCreatedNotification
         {
             Email = user.Message.Email,
@@ -73,7 +75,5 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         };
 
         await context.Publish(reservationCreatedNotification);
-
-        await context.RespondAsync(_mapper.Map<CreateReservationResult>(reservation));
     }
 }

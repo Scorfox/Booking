@@ -17,7 +17,7 @@
       <PackageReference Include="MediatR" Version="12.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
-      <PackageReference Include="Otus.Booking.Common" Version="0.0.0-g6c697a4e45" />
+      <PackageReference Include="Otus.Booking.Common" Version="0.0.0-g4360db2c9e" />
     </ItemGroup>
 
     <ItemGroup>
