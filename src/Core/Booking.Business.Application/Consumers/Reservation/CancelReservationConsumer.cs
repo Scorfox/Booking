@@ -39,7 +39,7 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
     public async Task Consume(ConsumeContext<CancelReservation> context)
     {
         var request = context.Message;
-        var table = await _tableRepository.FindByIdAsync(request.Id);
+        var table = await _tableRepository.FindByIdAsync(request.TableId);
         
         if (table == null)
             throw new NotFoundException($"Table with ID {request.TableId} doesn't exist");
@@ -55,7 +55,7 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
         var user = await _userRequestClient
             .GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
         var filial = await _filialByIdRequestClient
-            .GetResponse<GetFilialResult>(new GetFilialById {CompanyId = reservation.Table.FilialId});
+            .GetResponse<GetFilialResult>(new GetFilialById {Id = request.FilialId, CompanyId = request.CompanyId});
 
         reservation.WhoCancelledId = request.WhoCancelledId;
         
@@ -72,7 +72,9 @@ public class CancelReservationConsumer : IConsumer<CancelReservation>
             LastName = user.Message.LastName,
             PersonsCount = table.SeatsNumber,
             TableName = table.Name,
-            Status = ReservationStatus.Rejected
+            Status = ReservationStatus.Rejected,
+            From = reservation.From,
+            To = reservation.To
         };
 
         await context.Publish(reservationStatusNotification);

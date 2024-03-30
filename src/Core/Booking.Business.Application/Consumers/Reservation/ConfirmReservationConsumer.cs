@@ -40,7 +40,7 @@ public class ConfirmReservationConsumer : IConsumer<ConfirmReservation>
     {
         var request = context.Message;
 
-        var table = await _tableRepository.FindByIdAsync(request.Id);
+        var table = await _tableRepository.FindByIdAsync(request.TableId);
 
         if (table == null)
             throw new NotFoundException($"Table with ID {request.TableId} doesn't exist");
@@ -56,7 +56,7 @@ public class ConfirmReservationConsumer : IConsumer<ConfirmReservation>
         var user = await _userRequestClient
             .GetResponse<GetUserResult>(new GetUserById { Id = reservation.WhoBookedId });
         var filial = await _filialByIdRequestClient
-            .GetResponse<GetFilialResult>(new GetFilialById {CompanyId = reservation.Table.FilialId});
+            .GetResponse<GetFilialResult>(new GetFilialById {Id = request.FilialId, CompanyId = request.CompanyId});
 
         reservation.WhoConfirmedId = request.WhoConfirmedId;
         
@@ -73,7 +73,9 @@ public class ConfirmReservationConsumer : IConsumer<ConfirmReservation>
             LastName = user.Message.LastName,
             PersonsCount = table.SeatsNumber,
             TableName = table.Name,
-            Status = ReservationStatus.Confirmed
+            Status = ReservationStatus.Confirmed,
+            From = reservation.From,
+            To = reservation.To
         };
 
         await context.Publish(reservationStatusNotification);
