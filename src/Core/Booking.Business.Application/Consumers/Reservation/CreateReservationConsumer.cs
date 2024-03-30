@@ -15,7 +15,7 @@ namespace Booking.Business.Application.Consumers.Reservation;
 
 public class CreateReservationConsumer : IConsumer<CreateReservation>
 {
-    private readonly BookingLog _bookingLog;
+    private readonly IBookingReservationLogger _bookingReservationLogger;
     private readonly IMapper _mapper;
     private readonly IRequestClient<GetUserById> _userRequestClient;
     private readonly IRequestClient<GetFilialById> _filialByIdRequestClient;
@@ -23,7 +23,7 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
     private readonly IReservationRepository _reservationRepository;
 
     public CreateReservationConsumer(
-        BookingLog bookingLog,
+        IBookingReservationLogger bookingReservationLogger,
         IMapper mapper,
         ITableRepository tableRepository,
         IRequestClient<GetUserById> userRequestClient,
@@ -31,7 +31,7 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         IReservationRepository reservationRepository
     )
     {
-        _bookingLog = bookingLog;
+        _bookingReservationLogger = bookingReservationLogger;
         _mapper = mapper;
         _userRequestClient = userRequestClient;
         _filialByIdRequestClient = filialByIdRequestClient;
@@ -48,8 +48,10 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         if (table == null)
             throw new BadRequestException($"Table with ID {request.TableId} doesn't exist");
         
+        _bookingReservationLogger.AddLog($"Getting user {request.WhoBookedId} from Booking.Auth...");
         var user = await _userRequestClient
             .GetResponse<GetUserResult>(new GetUserById { Id = request.WhoBookedId });
+        _bookingReservationLogger.AddLog($"Getting filial {request.FilialId} from Booking.Auth...");
         var filial = await _filialByIdRequestClient
             .GetResponse<GetFilialResult>(new GetFilialById {Id = table.FilialId});
 
@@ -59,7 +61,9 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         
         await context.RespondAsync(_mapper.Map<CreateReservationResult>(reservation));
         
-        _bookingLog.AddLog($"{request.TableId} is pre-booked at {request.From} to {request.To} by userId {request.WhoBookedId}");
+        _bookingReservationLogger.AddLog($"Table {request.TableId} is pre-booked from {request.From} to {request.To} by user {request.WhoBookedId}");
+        
+        _bookingReservationLogger.AddLog($"Sending message to Booking.Notification for user {request.WhoBookedId} ...");
         
         var reservationCreatedNotification = new ReservationCreatedNotification
         {
@@ -75,5 +79,7 @@ public class CreateReservationConsumer : IConsumer<CreateReservation>
         };
 
         await context.Publish(reservationCreatedNotification);
+        
+        _bookingReservationLogger.ProcessLogs();
     }
 }
