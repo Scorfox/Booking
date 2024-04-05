@@ -2,7 +2,12 @@
 using Booking.Business.Application.Consumers.Table;
 using Booking.Business.Application;
 using Booking.Business.Persistence;
+using Booking.Presentation.Jobs;
+using Booking.Presentation.Options;
+using Booking.Presentation.Services;
 using MassTransit;
+using Quartz;
+using Quartz.AspNetCore;
 
 namespace Booking.Presentation
 {
@@ -17,11 +22,13 @@ namespace Booking.Presentation
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<ArchiverOptions>(Configuration.GetSection("Archiver"));
             services.ConfigurePersistence(Configuration);
             services.ConfigureApplication(Configuration);
 
             services.AddControllers();
             services.AddEndpointsApiExplorer();
+            services.AddSingleton<IArchiverService, ArchiverService>();
 
             services.AddMassTransit(x =>
             {
@@ -53,6 +60,28 @@ namespace Booking.Presentation
 
                 x.AddConsumer<CancelReservationConsumer>();
                 x.AddConsumer<ConfirmReservationConsumer>();
+            });
+            
+            services.AddQuartz(q =>
+            {
+                // Just use the name of your job that you created in the Jobs folder.
+                var jobKey = new JobKey("ArchiveLogs");
+                q.AddJob<ArchiveLogsJob>(opts => opts.WithIdentity(jobKey));
+
+                q.AddTrigger(opts => opts
+                    .ForJob(jobKey)
+                    .WithIdentity("ArchiveLogsJob-trigger")
+                    .StartNow()
+                    .WithSimpleSchedule(x => x
+                        .WithInterval(TimeSpan.Parse(Configuration["Archiver:StartingFrequency"]))
+                        .RepeatForever()));
+            });
+
+            // ASP.NET Core hosting
+            services.AddQuartzServer(options =>
+            {
+                // when shutting down we want jobs to complete gracefully
+                options.WaitForJobsToComplete = true;
             });
         }
 
