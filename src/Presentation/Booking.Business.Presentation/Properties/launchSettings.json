@@ -15,7 +15,11 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5200",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "RabbitMQ_Host": "rabbitmq://localhost",
+        "RabbitMQ_Username": "rabbit",
+        "RabbitMQ_Password": "rabbit",
+        "ConnectionStrings_PostgreSQL": "Server=localhost;Database=booking-business;Username=postgres;Password=postgres"
       }
     },
     "https": {

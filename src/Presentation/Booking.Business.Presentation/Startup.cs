@@ -61,28 +61,30 @@ namespace Booking.Presentation
                 x.AddConsumer<CancelReservationConsumer>();
                 x.AddConsumer<ConfirmReservationConsumer>();
             });
-            
-            services.AddQuartz(q =>
-            {
-                // Just use the name of your job that you created in the Jobs folder.
-                var jobKey = new JobKey("ArchiveLogs");
-                q.AddJob<ArchiveLogsJob>(opts => opts.WithIdentity(jobKey));
 
-                q.AddTrigger(opts => opts
-                    .ForJob(jobKey)
-                    .WithIdentity("ArchiveLogsJob-trigger")
-                    .StartNow()
-                    .WithSimpleSchedule(x => x
-                        .WithInterval(TimeSpan.Parse(Configuration["Archiver:StartingFrequency"]))
-                        .RepeatForever()));
-            });
+            if (Boolean.Parse(Configuration["Archiver:Enabled"]))
+            {            
+                services.AddQuartz(q =>
+                {
+                    // Just use the name of your job that you created in the Jobs folder.
+                    var jobKey = new JobKey("ArchiveLogs");
+                    q.AddJob<ArchiveLogsJob>(opts => opts.WithIdentity(jobKey));
 
-            // ASP.NET Core hosting
-            services.AddQuartzServer(options =>
-            {
-                // when shutting down we want jobs to complete gracefully
-                options.WaitForJobsToComplete = true;
-            });
+                    q.AddTrigger(opts => opts
+                        .ForJob(jobKey)
+                        .WithIdentity("ArchiveLogsJob-trigger")
+                        .StartNow()
+                        .WithSimpleSchedule(x => x
+                            .WithInterval(TimeSpan.Parse(Configuration["Archiver:StartingFrequency"]))
+                            .RepeatForever()));
+                });
+                // ASP.NET Core hosting
+                services.AddQuartzServer(options =>
+                {
+                    // when shutting down we want jobs to complete gracefully
+                    options.WaitForJobsToComplete = true;
+                });
+            }
         }
 
         public void Configure(WebApplication app, IWebHostEnvironment env)
