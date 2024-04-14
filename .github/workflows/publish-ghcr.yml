@@ -1,0 +1,16 @@
+name: Docker IMAGE CI for GHCR
+
+on:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and push the image
+        run: |
+          docker login --username Scorfox --password ${{ secrets.GHCR }} ghcr.io
+          docker build . --tag ghcr.io/scorfox/booking.business:latest
+          docker push ghcr.io/scorfox/booking.business:latest
